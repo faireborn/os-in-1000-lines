@@ -1,6 +1,13 @@
 #include "kernel.h"
 #include "common.h"
 
+#define PANIC(fmt, ...)                                                        \
+  do {                                                                         \
+    printf("PANIC: %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__);      \
+    while (1) {                                                                \
+    }                                                                          \
+  } while (0)
+
 extern char __bss[], __bss_end[], __stack_top[];
 
 struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, long arg4,
@@ -25,12 +32,10 @@ struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, long arg4,
 void putchar(char ch) { sbi_call(ch, 0, 0, 0, 0, 0, 0, 1); }
 
 void kernel_main(void) {
-  printf("\n\nHello %s\n", "World!");
-  printf("1 + 2 = %d, %x\n", 1 + 2, 0x1234abcd);
+  memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
 
-  for (;;) {
-    __asm__ __volatile("wfi");
-  }
+  PANIC("booted!");
+  printf("unreachable here!\n");
 }
 
 __attribute__((section(".text.boot"))) __attribute__((naked)) void boot(void) {
